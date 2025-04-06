@@ -32,17 +32,19 @@ if (!isset($_SESSION['loggedin'])) {
     <head>
       <meta charset="UTF-8">
       <title>Login</title>
+      <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
       <style>
-         body { font-family: Arial, sans-serif; background-color: #f7f7f7; }
-         .login-container { width: 300px; margin: 100px auto; padding: 20px; background: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-         input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin-bottom: 10px; }
-         input[type="submit"] { width: 100%; padding: 10px; background: #4CAF50; color: #fff; border: none; }
-         .error { color: red; }
+         body { font-family: 'Roboto', sans-serif; background-color: #f7f7f7; }
+         .login-container { width: 320px; margin: 120px auto; padding: 20px; background: #fff; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+         input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 3px; }
+         input[type="submit"] { width: 100%; padding: 10px; background: #4CAF50; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+         input[type="submit"]:hover { background: #45a049; }
+         .error { color: red; text-align: center; }
       </style>
     </head>
     <body>
        <div class="login-container">
-         <h2>Login</h2>
+         <h2 style="text-align:center;">Login</h2>
          <?php if(isset($error)) { echo "<p class='error'>$error</p>"; } ?>
          <form method="post" action="index.php">
             <input type="text" name="username" placeholder="Usuario" required>
@@ -53,6 +55,22 @@ if (!isset($_SESSION['loggedin'])) {
     </body>
     </html>
     <?php
+    exit;
+}
+
+// --- Deletion Action ---
+// If a deletion is requested, verify parameters and delete the file.
+if (isset($_GET['action']) && $_GET['action'] === 'delete') {
+    if (isset($_GET['folder']) && ($_GET['folder'] === 'incoming' || $_GET['folder'] === 'spam') && isset($_GET['file'])) {
+        $folderToDelete = $_GET['folder'];
+        $fileToDelete = basename($_GET['file']);
+        $filePath = "mail/$folderToDelete/$fileToDelete";
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+    }
+    // Redirect back to the folder view after deletion
+    header("Location: index.php?folder=" . urlencode($_GET['folder']));
     exit;
 }
 
@@ -99,98 +117,141 @@ if ($folder && is_dir($folderPath)) {
 <head>
     <meta charset="UTF-8">
     <title>Email Web Client</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
         }
         #header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px 20px;
             text-align: center;
+            font-size: 1.4em;
+        }
+        #header a {
+            color: #ecf0f1;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.8em;
         }
         #container {
             display: flex;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 60px);
         }
         #nav {
             width: 200px;
-            background-color: #f1f1f1;
-            padding: 10px;
+            background-color: #34495e;
+            padding: 15px;
             box-sizing: border-box;
+        }
+        #nav h3 {
+            color: #ecf0f1;
+            margin-top: 0;
+        }
+        #nav a {
+            display: block;
+            padding: 8px 10px;
+            margin: 8px 0;
+            background-color: #3b5998;
+            color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        #nav a:hover {
+            background-color: #2a4887;
         }
         #emailList {
             width: 300px;
             border-right: 1px solid #ddd;
-            padding: 10px;
+            padding: 15px;
             overflow-y: auto;
+            background-color: #ecf0f1;
             box-sizing: border-box;
+        }
+        #emailList h3 {
+            margin-top: 0;
+        }
+        #emailList ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .email-item {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            overflow: hidden;
+        }
+        .email-item a {
+            color: #2c3e50;
+            text-decoration: none;
+            display: block;
+        }
+        .email-item:hover {
+            background-color: #d0dce3;
+        }
+        .selected {
+            background-color: #b0c4de;
         }
         #emailContent {
             flex-grow: 1;
-            padding: 10px;
+            padding: 15px;
             overflow-y: auto;
+            background-color: #fff;
             box-sizing: border-box;
         }
-        a {
-            text-decoration: none;
-            color: #333;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .folder-link {
-            display: block;
-            margin-bottom: 10px;
-            padding: 5px;
-            background-color: #ddd;
-            border-radius: 3px;
-        }
-        .email-item {
-            padding: 5px;
-            border-bottom: 1px solid #ddd;
-        }
-        .email-item:hover {
-            background-color: #f9f9f9;
-        }
-        .selected {
-            background-color: #e0e0e0;
+        #emailContent h3 {
+            margin-top: 0;
         }
         table {
             border-collapse: collapse;
             width: 100%;
+            margin-bottom: 15px;
         }
         table, th, td {
-            border: 1px solid #ddd;
-            padding: 5px;
+            border: 1px solid #bdc3c7;
+            padding: 8px;
         }
         th {
-            background-color: #4CAF50;
-            color: white;
+            background-color: #2980b9;
+            color: #fff;
+        }
+        .delete-button {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: #e74c3c;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .delete-button:hover {
+            background-color: #c0392b;
         }
     </style>
 </head>
 <body>
     <div id="header">
-        <h1>Email Web Client</h1>
-        <a href="index.php?logout=1" style="color: white;">Logout</a>
+        Email Web Client
+        <a href="index.php?logout=1">Logout</a>
     </div>
     <div id="container">
         <!-- Left Navigation: Folder list -->
         <div id="nav">
             <h3>Folders</h3>
-            <a class="folder-link" href="index.php?folder=incoming">Inbox (Received)</a>
-            <a class="folder-link" href="index.php?folder=spam">Spam</a>
+            <a href="index.php?folder=incoming">Inbox (Received)</a>
+            <a href="index.php?folder=spam">Spam</a>
         </div>
         <!-- Middle: Email List -->
         <div id="emailList">
             <h3>Email List</h3>
             <?php if ($folder): ?>
-                <ul style="list-style-type: none; padding: 0;">
+                <ul>
                 <?php foreach ($emailList as $emailFile): ?>
                     <li class="email-item <?php echo ($file === $emailFile) ? 'selected' : ''; ?>">
-                        <a href="index.php?folder=<?php echo $folder; ?>&file=<?php echo urlencode($emailFile); ?>">
+                        <a href="index.php?folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($emailFile); ?>">
                             <?php echo htmlspecialchars($emailFile); ?>
                         </a>
                     </li>
@@ -207,8 +268,8 @@ if ($folder && is_dir($folderPath)) {
                 <table>
                     <thead>
                         <tr>
-                            <th>Key</th>
-                            <th>Value</th>
+                            <th>Clave</th>
+                            <th>Valor</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -220,6 +281,8 @@ if ($folder && is_dir($folderPath)) {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                <!-- Delete Email Button -->
+                <a class="delete-button" href="index.php?action=delete&folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($file); ?>" onclick="return confirm('¿Seguro que deseas eliminar este correo?');">Delete Email</a>
             <?php else: ?>
                 <p>Select an email to view its content.</p>
             <?php endif; ?>
