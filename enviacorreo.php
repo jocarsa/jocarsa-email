@@ -258,25 +258,28 @@ if (!$isSpam && $shouldSendEmail) {
 }
 
 // ----- MENSAJE DE ÉXITO CON REDIRECCIÓN -----
-
 // Determinar el protocolo actual
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' 
              || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
 
-// Procesar la URL de referencia para redirigir al subdominio mail
+// Función para extraer el dominio principal
+function getMainDomain($host) {
+    // Eliminar subdominios comunes como "www" o "mail"
+    $host = preg_replace('/^(www|mail)\./i', '', $host);
+    $parts = explode('.', $host);
+    $numParts = count($parts);
+    if ($numParts >= 2) {
+        return $parts[$numParts - 2] . '.' . $parts[$numParts - 1];
+    }
+    return $host;
+}
+
+// Procesar la URL de referencia para redirigir al dominio principal
 if (isset($_SERVER['HTTP_REFERER'])) {
     $parsedUrl = parse_url($_SERVER['HTTP_REFERER']);
     if (isset($parsedUrl['host'])) {
-        $host = $parsedUrl['host'];
-        // Eliminar "www." si existe
-        $host = preg_replace('/^www\./i', '', $host);
-        // Prepend "mail." si aún no está presente
-        if (stripos($host, 'mail.') !== 0) {
-            $host = 'mail.' . $host;
-        }
-        // Utilizar el esquema del referrer si está definido, sino usar el determinado anteriormente
-        $redirectProtocol = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] : $protocol;
-        $redirectUrl = $redirectProtocol . '://' . $host;
+        $mainDomain = getMainDomain($parsedUrl['host']);
+        $redirectUrl = $protocol . '://' . $mainDomain;
     } else {
         $redirectUrl = $protocol . '://' . $_SERVER['HTTP_HOST'];
     }
