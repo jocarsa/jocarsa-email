@@ -147,7 +147,8 @@ if (!is_dir($spamFolder)) {
 
 // Guardar los datos del formulario como JSON
 $jsonData     = json_encode($dataForJson, JSON_PRETTY_PRINT);
-$filename     = uniqid('mail_', true) . '.json';
+$filename = date('Y-m-d-H-i-s') . '.json';
+
 $targetFolder = $isSpam ? $spamFolder : $incomingFolder;
 file_put_contents($targetFolder . '/' . $filename, $jsonData);
 
