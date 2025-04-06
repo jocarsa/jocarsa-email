@@ -27,24 +27,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Agregar la URL de referencia a los datos
 $referrer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'Acceso directo o referencia no establecida';
-$formData[]                     = ["URL de referencia", $referrer];
+$formData[] = ["URL de referencia", $referrer];
 $dataForJson['URL de referencia'] = $referrer;
 
 // ---- Datos adicionales del visitante ----
 // IP del visitante
 $visitorIP = $_SERVER['REMOTE_ADDR'];
-$formData[]                     = ["IP del visitante", $visitorIP];
+$formData[] = ["IP del visitante", $visitorIP];
 $dataForJson['IP del visitante'] = $visitorIP;
 
 // Agente de Usuario del visitante
 $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'No proporcionado';
-$formData[]                     = ["Agente de Usuario", $userAgent];
+$formData[] = ["Agente de Usuario", $userAgent];
 $dataForJson['Agente de Usuario'] = $userAgent;
 
 // Fecha de envío en formato legible en español
 $submissionDate = strftime('%A, %d de %B de %Y %H:%M:%S');
-$formData[]                     = ["Fecha de envío", $submissionDate];
-$dataForJson['Fecha de envío']  = $submissionDate;
+$formData[] = ["Fecha de envío", $submissionDate];
+$dataForJson['Fecha de envío'] = $submissionDate;
 
 // Generar tabla HTML para el cuerpo del correo
 $message  = "<html><body>";
@@ -258,9 +258,31 @@ if (!$isSpam && $shouldSendEmail) {
 }
 
 // ----- MENSAJE DE ÉXITO CON REDIRECCIÓN -----
-// Determinar el protocolo para la redirección (HTTP o HTTPS)
+
+// Determinar el protocolo actual
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' 
-             || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+             || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
+
+// Procesar la URL de referencia para redirigir al subdominio mail
+if (isset($_SERVER['HTTP_REFERER'])) {
+    $parsedUrl = parse_url($_SERVER['HTTP_REFERER']);
+    if (isset($parsedUrl['host'])) {
+        $host = $parsedUrl['host'];
+        // Eliminar "www." si existe
+        $host = preg_replace('/^www\./i', '', $host);
+        // Prepend "mail." si aún no está presente
+        if (stripos($host, 'mail.') !== 0) {
+            $host = 'mail.' . $host;
+        }
+        // Utilizar el esquema del referrer si está definido, sino usar el determinado anteriormente
+        $redirectProtocol = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] : $protocol;
+        $redirectUrl = $redirectProtocol . '://' . $host;
+    } else {
+        $redirectUrl = $protocol . '://' . $_SERVER['HTTP_HOST'];
+    }
+} else {
+    $redirectUrl = $protocol . '://' . $_SERVER['HTTP_HOST'];
+}
 ?>
 <!DOCTYPE html>
 <html lang='es'>
@@ -296,8 +318,7 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
     </div>
     <script>
         setTimeout(function() {
-            // Redirigir a la raíz del dominio (por ejemplo, https://xxxxx.com)
-            window.location.href = '<?php echo $protocol . $_SERVER['HTTP_HOST']; ?>';
+            window.location.href = '<?php echo $redirectUrl; ?>';
         }, 5000);
     </script>
 </body>
