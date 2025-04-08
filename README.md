@@ -10,7 +10,7 @@
     ComprobarDominio -->AplicaSPAM[Aplicamos filtro de SPAM];
     AplicaSPAM --> ComprobamosMailValido[Comprobamos si es un email valido];
     ComprobamosMailValido --> GuardarJSON[Guardamos el correo como archivo json];
-    Guardamos el correo como archivo json --> EnviarCorreo[Se envía solo si no es spam];
+    GuardarJSON --> EnviarCorreo[Se envía solo si no es spam];
     EnviarCorreo --> MensajeExito[Se muestra mensaje de éxito];
     MensajeExito --> Redirigir[Se redirige en 5 segundos];
     
