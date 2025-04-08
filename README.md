@@ -4,7 +4,7 @@
 
 ```mermaid
  	graph TD;
-    A-->B;
+    Recogemos datos de GET y POST-->Agregamos campos de fecha, url de referencia, user agent;
     A-->C;
     B-->D;
     C-->D;
