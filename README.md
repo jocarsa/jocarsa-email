@@ -1,39 +1,57 @@
+# Jocarsa Email System
 
-## Detailed Workflow
+## Descripción General
 
-1. **Form Submission**  
-   The system receives data through a form via GET or POST methods.
+Este proyecto es un sistema de envío y gestión de correos electrónicos diseñado para facilitar la comunicación a través de formularios web. Incluye funcionalidades como filtrado de spam y autenticación de usuarios.
 
-2. **Data Collection & Metadata**  
-   The submitted form data is captured. Additional metadata is appended:
-   - HTTP referrer
-   - Visitor IP address
-   - User Agent string
-   - Timestamp in a human-readable format
+## Estructura del Directorio
 
-3. **Spam Filtering & Email Validation**  
-   The system applies two key checks:  
-   - **Spam Filter:** Scans all submitted values for spam keywords (loaded from `spamfilter.txt`).  
-   - **Email Validation:** Validates email fields by checking that the email has a proper domain format and that the top-level domain (TLD) exists in the IANA list.  
-   Depending on these checks, the submission is flagged for further processing.
+/var/www/html/jocarsa-email
+├── README.md             # Documentación del proyecto
+├── config.php            # Configuración del servidor SMTP
+├── enviacorreo.php       # Script para enviar correos electrónicos
+├── index.php             # Interfaz web para gestionar correos
+└── spamfilter.txt        # Lista de palabras clave para filtrar spam
 
-4. **Data Storage**  
-   - If the submission fails either check, the JSON data is saved in the `mail/spam` folder.
-   - If the submission passes both checks, the data is saved in the `mail/incoming` folder.
 
-5. **Email Sending Condition**  
-   Only submissions that pass validation and come from a valid HTTP referrer (containing `jocarsa.com`) proceed to trigger the SMTP email sending process:
-   - The system establishes an SSL connection to the SMTP server.
-   - It authenticates using `AUTH LOGIN`.
-   - The email (with HTML content) is sent.
-   - Finally, the connection is closed.
+## Configuración
 
-6. **User Feedback**  
-   After processing, a success message is shown and the user is redirected to the main domain.
+1. **Configuración SMTP:**
+   - Edita el archivo `config.php` para establecer las credenciales del servidor SMTP.
 
-## Updated Flow Chart
+2. **Dependencias:**
+   - Asegúrate de tener PHP instalado en tu servidor.
+   - Extensiones necesarias: `openssl`, `fileinfo`.
 
-Below is the updated Mermaid flow chart that accurately reflects the conditional operations performed by the system:
+## Uso
+
+1. **Envío de Correos:**
+   - Accede al formulario web para enviar correos.
+   - Los correos se almacenan en la carpeta `mail/incoming` o `mail/spam` dependiendo del filtro de spam.
+
+2. **Interfaz Web:**
+   - Accede a `index.php` para gestionar los correos recibidos.
+   - Autentícate con las credenciales definidas en el script.
+
+## Funcionalidades
+
+- **Filtro de Spam:**
+  - Filtra correos basados en palabras clave definidas en `spamfilter.txt`.
+
+- **Autenticación de Usuarios:**
+  - Sistema de login para acceder a la interfaz de gestión de correos.
+
+- **Gestión de Correos:**
+  - Visualiza y elimina correos directamente desde la interfaz web.
+
+## Contribuciones
+
+Si deseas contribuir al proyecto, por favor sigue las mejores prácticas de desarrollo y envía tus pull requests con una descripción clara de los cambios realizados.
+
+## Licencia
+
+Este proyecto está licenciado bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+
 
 ```mermaid
 flowchart TD
