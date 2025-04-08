@@ -3,9 +3,7 @@
 # Diagrama de comportamiento
 
 ```mermaid
- 	graph TD;
-    "Recogemos datos de GET y POST"-->"Agregamos campos de fecha, url de referencia, user agent";
-    A-->C;
-    B-->D;
-    C-->D;
+    graph TD;
+    RecogerDatos[Recogemos datos de GET y POST] --> AgregarCampos[Agregamos campos de fecha, url de referencia, user agent];
+    AgregarCampos --> EnviarEmail[Enviamos el correo];
 ```
