@@ -43,7 +43,7 @@ flowchart TD
     D{Pass Spam Filter & Email Validation?}
     D -- Yes --> E[Save JSON to mail incoming]
     D -- No  --> F[Save JSON to mail spam]
-    E --> G{Valid HTTP_REFERER? (contains jocarsa.com)}
+    E --> G{Valid HTTP_REFERER?  contains jocarsa.com}
     G -- Yes --> H[Connect to SMTP Server via SSL]
     G -- No  --> I[Do Not Send Email]
     H --> J[Authenticate with AUTH LOGIN]
