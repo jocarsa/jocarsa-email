@@ -58,8 +58,8 @@ if (!isset($_SESSION['loggedin'])) {
     exit;
 }
 
-// --- Deletion Action ---
-// If a deletion is requested, verify parameters and delete the file.
+// --- Email Deletion Action ---
+// (Keep your existing email deletion code here)
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     if (isset($_GET['folder']) && ($_GET['folder'] === 'incoming' || $_GET['folder'] === 'spam') && isset($_GET['file'])) {
         $folderToDelete = $_GET['folder'];
@@ -74,41 +74,51 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     exit;
 }
 
-// --- Email Web Client Interface ---
-
-// Get selected folder and file from GET parameters
-$folder = isset($_GET['folder']) ? $_GET['folder'] : '';
-$file = isset($_GET['file']) ? $_GET['file'] : '';
-
-// Allow only "incoming" or "spam" as valid folder values
-if ($folder !== 'incoming' && $folder !== 'spam') {
-    $folder = '';
-}
-
-$baseDir = 'mail'; // Base folder where emails are stored
-$folderPath = $folder ? $baseDir . '/' . $folder : '';
-
-// If a file is selected, verify it exists and load its content
-$emailData = null;
-if ($folder && $file) {
-    $filePath = $folderPath . '/' . basename($file); // use basename for safety
-    if (file_exists($filePath)) {
-        $jsonContent = file_get_contents($filePath);
-        $emailData = json_decode($jsonContent, true);
-    }
-}
-
-// If a folder is selected, get the list of email files
-$emailList = [];
-if ($folder && is_dir($folderPath)) {
-    // Get all JSON files in the selected folder
-    $files = glob($folderPath . '/*.json');
-    // Sort files by modification time descending (latest first)
-    usort($files, function($a, $b) {
-        return filemtime($b) - filemtime($a);
-    });
-    foreach ($files as $f) {
-        $emailList[] = basename($f);
+// --- SPAM WORDS MANAGEMENT CRUD ---
+// If the URL includes manage=spamwords, process spam word actions.
+if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
+    // Process only add, delete, and update actions. (The 'edit' action is only for displaying the inline form.)
+    if (isset($_REQUEST['actionSpam']) && $_REQUEST['actionSpam'] !== 'editSpam') {
+        $actionSpam = $_REQUEST['actionSpam'];
+        $spamFilePath = 'spamfilter.txt';
+        $spamWords = [];
+        if (file_exists($spamFilePath)) {
+            $spamWords = file($spamFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        }
+        switch ($actionSpam) {
+            case 'addSpam':
+                if (isset($_POST['newSpam'])) {
+                    $newSpam = trim($_POST['newSpam']);
+                    if ($newSpam !== '' && !in_array($newSpam, $spamWords)) {
+                        $spamWords[] = $newSpam;
+                        file_put_contents($spamFilePath, implode("\n", $spamWords) . "\n");
+                    }
+                }
+                break;
+            case 'deleteSpam':
+                if (isset($_GET['index'])) {
+                    $index = intval($_GET['index']);
+                    if (isset($spamWords[$index])) {
+                        unset($spamWords[$index]);
+                        $spamWords = array_values($spamWords);
+                        file_put_contents($spamFilePath, implode("\n", $spamWords) . "\n");
+                    }
+                }
+                break;
+            case 'updateSpam':
+                if (isset($_POST['index']) && isset($_POST['updatedSpam'])) {
+                    $index = intval($_POST['index']);
+                    $updatedSpam = trim($_POST['updatedSpam']);
+                    if (isset($spamWords[$index]) && $updatedSpam !== '') {
+                        $spamWords[$index] = $updatedSpam;
+                        file_put_contents($spamFilePath, implode("\n", $spamWords) . "\n");
+                    }
+                }
+                break;
+        }
+        // Redirect to clear form submissions and avoid reprocessing
+        header("Location: index.php?manage=spamwords");
+        exit;
     }
 }
 ?>
@@ -164,6 +174,7 @@ if ($folder && is_dir($folderPath)) {
         #nav a:hover {
             background-color: #2a4887;
         }
+        /* Email client styles */
         #emailList {
             width: 300px;
             border-right: 1px solid #ddd;
@@ -202,33 +213,42 @@ if ($folder && is_dir($folderPath)) {
             background-color: #fff;
             box-sizing: border-box;
         }
-        #emailContent h3 {
+        /* Spam words management styles */
+        #spamManagement {
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        #spamManagement h3 {
             margin-top: 0;
         }
-        table {
+        #spamManagement table {
             border-collapse: collapse;
             width: 100%;
-            margin-bottom: 15px;
+            margin-top: 20px;
         }
-        table, th, td {
+        #spamManagement table, #spamManagement th, #spamManagement td {
             border: 1px solid #bdc3c7;
             padding: 8px;
         }
-        th {
+        #spamManagement th {
             background-color: #2980b9;
             color: #fff;
         }
-        .delete-button {
-            display: inline-block;
-            padding: 8px 12px;
-            background-color: #e74c3c;
-            color: #fff;
+        .action-link {
+            margin-right: 10px;
             text-decoration: none;
-            border-radius: 4px;
-            margin-top: 10px;
+            color: #2980b9;
         }
-        .delete-button:hover {
-            background-color: #c0392b;
+        .action-link:hover {
+            text-decoration: underline;
+        }
+        .form-inline input[type="text"] {
+            padding: 4px;
+            margin-right: 4px;
+        }
+        .form-inline input[type="submit"] {
+            padding: 4px 8px;
         }
     </style>
 </head>
@@ -238,13 +258,116 @@ if ($folder && is_dir($folderPath)) {
         <a href="index.php?logout=1">Logout</a>
     </div>
     <div id="container">
-        <!-- Left Navigation: Folder list -->
+        <!-- Left Navigation: Folder list and Spam Words link -->
         <div id="nav">
             <h3>Folders</h3>
             <a href="index.php?folder=incoming">Inbox (Received)</a>
             <a href="index.php?folder=spam">Spam</a>
+            <a href="index.php?manage=spamwords">Spam Words</a>
         </div>
-        <!-- Middle: Email List -->
+
+        <?php if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords'): 
+            // Load spam words for display
+            $spamFilePath = 'spamfilter.txt';
+            $spamWords = [];
+            if (file_exists($spamFilePath)) {
+                $spamWords = file($spamFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            }
+            // Check if an edit request was made via GET
+            $editIndex = null;
+            if (isset($_GET['actionSpam']) && $_GET['actionSpam'] === 'editSpam' && isset($_GET['index'])) {
+                $editIndex = intval($_GET['index']);
+            }
+        ?>
+        <!-- SPAM WORDS MANAGEMENT INTERFACE -->
+        <div id="spamManagement">
+            <h3>Spam Words Management</h3>
+            <!-- Form to add a new spam word -->
+            <form method="post" action="index.php?manage=spamwords&actionSpam=addSpam" class="form-inline">
+                <input type="text" name="newSpam" placeholder="Nuevo spam word" required>
+                <input type="submit" value="Agregar">
+            </form>
+            <!-- Table displaying current spam words -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Spam Word</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($spamWords)): ?>
+                        <tr>
+                            <td colspan="3">No hay spam words definidos.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($spamWords as $index => $word): ?>
+                        <tr>
+                            <td><?php echo $index + 1; ?></td>
+                            <td>
+                                <?php if ($editIndex === $index): ?>
+                                    <!-- Inline edit form -->
+                                    <form method="post" action="index.php?manage=spamwords&actionSpam=updateSpam" class="form-inline">
+                                        <input type="hidden" name="index" value="<?php echo $index; ?>">
+                                        <input type="text" name="updatedSpam" value="<?php echo htmlspecialchars($word); ?>" required>
+                                        <input type="submit" value="Guardar">
+                                    </form>
+                                <?php else: ?>
+                                    <?php echo htmlspecialchars($word); ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($editIndex !== $index): ?>
+                                    <a class="action-link" href="index.php?manage=spamwords&actionSpam=editSpam&index=<?php echo $index; ?>">Editar</a>
+                                    <a class="action-link" href="index.php?manage=spamwords&actionSpam=deleteSpam&index=<?php echo $index; ?>" onclick="return confirm('¿Seguro que deseas eliminar esta palabra?');">Eliminar</a>
+                                <?php else: ?>
+                                    <a class="action-link" href="index.php?manage=spamwords" title="Cancelar edición">Cancelar</a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php else: 
+            // --- EMAIL CLIENT INTERFACE (existing) ---
+            // Get selected folder and file from GET parameters
+            $folder = isset($_GET['folder']) ? $_GET['folder'] : '';
+            $file = isset($_GET['file']) ? $_GET['file'] : '';
+
+            // Allow only "incoming" or "spam" as valid folder values
+            if ($folder !== 'incoming' && $folder !== 'spam') {
+                $folder = '';
+            }
+
+            $baseDir = 'mail'; // Base folder where emails are stored
+            $folderPath = $folder ? $baseDir . '/' . $folder : '';
+
+            // If a file is selected, verify it exists and load its content
+            $emailData = null;
+            if ($folder && $file) {
+                $filePath = $folderPath . '/' . basename($file);
+                if (file_exists($filePath)) {
+                    $jsonContent = file_get_contents($filePath);
+                    $emailData = json_decode($jsonContent, true);
+                }
+            }
+
+            // If a folder is selected, get the list of email files
+            $emailList = [];
+            if ($folder && is_dir($folderPath)) {
+                $files = glob($folderPath . '/*.json');
+                usort($files, function($a, $b) {
+                    return filemtime($b) - filemtime($a);
+                });
+                foreach ($files as $f) {
+                    $emailList[] = basename($f);
+                }
+            }
+        ?>
+        <!-- Email Client Interface -->
         <div id="emailList">
             <h3>Email List</h3>
             <?php if ($folder): ?>
@@ -261,7 +384,6 @@ if ($folder && is_dir($folderPath)) {
                 <p>Select a folder from the left.</p>
             <?php endif; ?>
         </div>
-        <!-- Right: Email Content -->
         <div id="emailContent">
             <h3>Email Content</h3>
             <?php if ($emailData): ?>
@@ -281,12 +403,12 @@ if ($folder && is_dir($folderPath)) {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-                <!-- Delete Email Button -->
                 <a class="delete-button" href="index.php?action=delete&folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($file); ?>" onclick="return confirm('¿Seguro que deseas eliminar este correo?');">Delete Email</a>
             <?php else: ?>
                 <p>Select an email to view its content.</p>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
     </div>
 </body>
 </html>
