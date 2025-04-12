@@ -34,12 +34,16 @@ if (!isset($_SESSION['loggedin'])) {
       <title>Login</title>
       <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
       <style>
-         body { font-family: 'Roboto', sans-serif; background-color: #f7f7f7; }
+      @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
+         body { font-family: Ubuntu, sans-serif; background-color: #f7f7f7; }
          .login-container { width: 320px; margin: 120px auto; padding: 20px; background: #fff; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
          input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 3px; }
          input[type="submit"] { width: 100%; padding: 10px; background: #4CAF50; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
          input[type="submit"]:hover { background: #45a049; }
          .error { color: red; text-align: center; }
+         input{
+        	box-sizing:border-box;
+        }
       </style>
     </head>
     <body>
@@ -126,144 +130,203 @@ if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Email Web Client</title>
+    <title>jocarsa | email</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f7f9;
-            color: #333;
-        }
-        #header {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px 20px;
-            text-align: center;
-            font-size: 1.4em;
-        }
-        #header a {
-            color: #ecf0f1;
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 0.8em;
-        }
-        #container {
-            display: flex;
-            height: calc(100vh - 60px);
-        }
-        #nav {
-            width: 200px;
-            background-color: #34495e;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        #nav h3 {
-            color: #ecf0f1;
-            margin-top: 0;
-        }
-        #nav a {
-            display: block;
-            padding: 8px 10px;
-            margin: 8px 0;
-            background-color: #3b5998;
-            color: #fff;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-        #nav a:hover {
-            background-color: #2a4887;
-        }
-        /* Email client styles */
-        #emailList {
-            width: 300px;
-            border-right: 1px solid #ddd;
-            padding: 15px;
-            overflow-y: auto;
-            background-color: #ecf0f1;
-            box-sizing: border-box;
-        }
-        #emailList h3 {
-            margin-top: 0;
-        }
-        #emailList ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .email-item {
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-            overflow: hidden;
-        }
-        .email-item a {
-            color: #2c3e50;
-            text-decoration: none;
-            display: block;
-        }
-        .email-item:hover {
-            background-color: #d0dce3;
-        }
-        .selected {
-            background-color: #b0c4de;
-        }
-        #emailContent {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            background-color: #fff;
-            box-sizing: border-box;
-        }
-        /* Spam words management styles */
-        #spamManagement {
-            width: 100%;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        #spamManagement h3 {
-            margin-top: 0;
-        }
-        #spamManagement table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        #spamManagement table, #spamManagement th, #spamManagement td {
-            border: 1px solid #bdc3c7;
-            padding: 8px;
-        }
-        #spamManagement th {
-            background-color: #2980b9;
-            color: #fff;
-        }
-        .action-link {
-            margin-right: 10px;
-            text-decoration: none;
-            color: #2980b9;
-        }
-        .action-link:hover {
-            text-decoration: underline;
-        }
-        .form-inline input[type="text"] {
-            padding: 4px;
-            margin-right: 4px;
-        }
-        .form-inline input[type="submit"] {
-            padding: 4px 8px;
-        }
-    </style>
+    @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
+    /* General layout styling */
+    body {
+        margin: 0;
+        font-family: Ubuntu, sans-serif;
+        background-color: #f4f7f9;
+        color: #333;
+    }
+    /* Header styles */
+    #header {
+        background-color: #34495e;
+        color: #ecf0f1;
+        padding: 15px 20px;
+        text-align: center;
+        font-size: 1.4em;
+    }
+    #header a {
+        color: #ecf0f1;
+        text-decoration: none;
+        margin-left: 20px;
+        font-size: 0.8em;
+    }
+    /* Navigation styles (preserving current color scheme) */
+    #nav {
+        width: 220px;
+        background-color: #34495e;
+        padding: 20px;
+        box-sizing: border-box;
+        padding-right:0px;
+    }
+    #nav h3 {
+        color: #ecf0f1;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    #nav a {
+        display: block;
+        padding: 12px 15px;
+        margin: 8px 0;
+        background-color: #3b5998;
+        color: #fff;
+        border-radius: 4px 0px 0px 4px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    #nav a:hover {
+        background-color: #2a4887;
+    }
+    #nav .activo {
+        background-color: #ecf0f1;
+        color: #34495e;
+    }
+    /* Container layout for email client */
+    #container {
+        display: flex;
+        height: calc(100vh - 0px);
+    }
+    /* Email list styling */
+    #emailList {
+        width: 320px;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: #ecf0f1;
+        box-sizing: border-box;
+        padding-right:0px;
+    }
+    #emailList h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    #emailList ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .email-item {
+        padding: 12px;
+        border-bottom: 1px solid #ccc;
+    }
+    .email-item a {
+        color: #2c3e50;
+        text-decoration: none;
+        display: block;
+    }
+    .email-item:hover {
+        background-color: #d0dce3;
+    }
+    .selected {
+        background-color: #ffffff;
+        position: relative;
+    }
+    /* Email content styling */
+    #emailContent {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: #fff;
+        box-sizing: border-box;
+    }
+    #emailContent h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    /* Enhanced table styles for JSON content presentation */
+    #emailContent table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    #emailContent th, 
+    #emailContent td {
+        border: 1px solid #ddd;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+    }
+    #emailContent th {
+        background-color: #2980b9;
+        color: #fff;
+    }
+    #emailContent tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    /* Delete button styling */
+    .delete-button {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 8px 12px;
+        background-color: #e74c3c;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+    }
+    .delete-button:hover {
+        background-color: #c0392b;
+    }
+    /* Spam management section styling */
+    #spamManagement {
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    #spamManagement h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    #spamManagement table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+    }
+    #spamManagement table, 
+    #spamManagement th, 
+    #spamManagement td {
+        border: 1px solid #bdc3c7;
+        padding: 10px;
+    }
+    #spamManagement th {
+        background-color: #2980b9;
+        color: #fff;
+    }
+    .action-link {
+        margin-right: 10px;
+        text-decoration: none;
+        color: #2980b9;
+    }
+    .action-link:hover {
+        text-decoration: underline;
+    }
+    .form-inline input[type="text"] {
+        padding: 6px;
+        margin-right: 6px;
+    }
+    .form-inline input[type="submit"] {
+        padding: 6px 10px;
+    }
+    input {
+        box-sizing: border-box;
+    }
+</style>
+
 </head>
 <body>
-    <div id="header">
-        Email Web Client
-        <a href="index.php?logout=1">Logout</a>
-    </div>
+ 
     <div id="container">
         <!-- Left Navigation: Folder list and Spam Words link -->
         <div id="nav">
-            <h3>Folders</h3>
-            <a href="index.php?folder=incoming">Inbox (Received)</a>
-            <a href="index.php?folder=spam">Spam</a>
-            <a href="index.php?manage=spamwords">Spam Words</a>
+        
+            <h3>jocarsa | email</h3>
+            <a href="index.php?folder=incoming" <?php echo (@$_GET['folder'] == 'incoming') ? 'class="activo"' : ''; ?>>Recibidos</a>
+				<a href="index.php?folder=spam" <?php echo (@$_GET['folder'] == 'spam') ? 'class="activo"' : ''; ?>>Spam</a>
+				<a href="index.php?manage=spamwords" <?php echo (isset($_GET['manage']) && @$_GET['manage'] == 'spamwords') ? 'class="activo"' : ''; ?>>Palabras de Spam</a>
+				<a href="index.php?logout=1">Cerrar sesión</a>
         </div>
 
         <?php if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords'): 
@@ -281,7 +344,7 @@ if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
         ?>
         <!-- SPAM WORDS MANAGEMENT INTERFACE -->
         <div id="spamManagement">
-            <h3>Spam Words Management</h3>
+            <h3>Gestión de Spam</h3>
             <!-- Form to add a new spam word -->
             <form method="post" action="index.php?manage=spamwords&actionSpam=addSpam" class="form-inline">
                 <input type="text" name="newSpam" placeholder="Nuevo spam word" required>
@@ -292,7 +355,7 @@ if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Spam Word</th>
+                        <th>Palabra de Spam</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -369,7 +432,7 @@ if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
         ?>
         <!-- Email Client Interface -->
         <div id="emailList">
-            <h3>Email List</h3>
+            <h3>Lista de correos</h3>
             <?php if ($folder): ?>
                 <ul>
                 <?php foreach ($emailList as $emailFile): ?>
@@ -381,11 +444,11 @@ if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
                 <?php endforeach; ?>
                 </ul>
             <?php else: ?>
-                <p>Select a folder from the left.</p>
+                <p>Selecciona una capeta de la columna de la izquierda</p>
             <?php endif; ?>
         </div>
         <div id="emailContent">
-            <h3>Email Content</h3>
+            <h3>Contenido del correo</h3>
             <?php if ($emailData): ?>
                 <table>
                     <thead>
@@ -405,7 +468,7 @@ if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
                 </table>
                 <a class="delete-button" href="index.php?action=delete&folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($file); ?>" onclick="return confirm('¿Seguro que deseas eliminar este correo?');">Delete Email</a>
             <?php else: ?>
-                <p>Select an email to view its content.</p>
+                <p>Selecciona un correo para ver su contenido</p>
             <?php endif; ?>
         </div>
         <?php endif; ?>
