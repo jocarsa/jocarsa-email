@@ -82,52 +82,64 @@ if (isset($_SERVER['HTTP_REFERER']) && stripos($_SERVER['HTTP_REFERER'], 'jocars
 }
 
 // ----- FILTRO DE SPAM -----
-// Por defecto, no es spam
+// Inicialmente, no se considera spam
 $isSpam = false;
 $spamFilterFile = 'spamfilter.txt';
 if (file_exists($spamFilterFile)) {
     // Leer palabras clave de spam del archivo (una por línea)
     $spamWords = file($spamFilterFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($spamWords as $spamWord) {
-        // Comprobar si algún dato del formulario contiene la palabra clave de spam (sin distinguir mayúsculas/minúsculas)
         foreach ($dataForJson as $value) {
             if (stripos($value, $spamWord) !== false) {
                 $isSpam = true;
-                break 2; // Salir si se encuentra alguna palabra de spam
+                break 2; // Sale de ambos bucles si se encuentra una coincidencia
             }
         }
     }
 }
 
 // ----- NUEVO FILTRO: VALIDACIÓN DE EMAIL -----
-// Verificar si algún campo es un email y, en ese caso, comprobar su dominio y TLD
+// Revisar cada dato en busca de campos que parezcan correos electrónicos
 foreach ($dataForJson as $value) {
-    // Verifica si el valor es exactamente un email
-    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
-        // Obtener el dominio del email
-        $emailDomain = substr(strrchr($value, "@"), 1);
-        // Asegurarse de que el dominio contenga un punto para extraer la TLD
-        if (strpos($emailDomain, ".") === false) {
+    if (strpos($value, '@') !== false) {
+        // Limpiar la cadena quitando espacios en blanco al inicio y al final
+        $cleanEmail = trim($value);
+        
+        // Rechazar si hay espacios en medio del email
+        if (preg_match('/\s/', $cleanEmail)) {
             $isSpam = true;
             break;
         }
-        // Extraer la TLD (parte después del último punto) y convertir a mayúsculas
-        $tld = strtoupper(substr(strrchr($emailDomain, "."), 1));
         
-        // Obtener la lista de TLD válidas desde IANA
-        $tldListRaw = file_get_contents("https://data.iana.org/TLD/tlds-alpha-by-domain.txt");
-        if ($tldListRaw !== false) {
-            $tldList = explode("\n", $tldListRaw);
-            $tldList = array_map('trim', $tldList);
-            // Comprobar si la TLD extraída se encuentra en la lista
-            if (!in_array($tld, $tldList)) {
+        // Validar el formato del email
+        if (filter_var($cleanEmail, FILTER_VALIDATE_EMAIL)) {
+            // Extraer el dominio del email
+            $emailDomain = substr(strrchr($cleanEmail, "@"), 1);
+            
+            // Verificar que el dominio contenga al menos un punto
+            if (strpos($emailDomain, ".") === false) {
                 $isSpam = true;
                 break;
             }
-        } else {
-            // Si no se pudo obtener la lista, considerar el email inválido
-            $isSpam = true;
-            break;
+            
+            // Extraer la TLD (parte después del último punto) y convertir a mayúsculas
+            $tld = strtoupper(substr(strrchr($emailDomain, "."), 1));
+            
+            // Obtener la lista de TLD válidas desde IANA
+            $tldListRaw = file_get_contents("https://data.iana.org/TLD/tlds-alpha-by-domain.txt");
+            if ($tldListRaw !== false) {
+                $tldList = explode("\n", $tldListRaw);
+                $tldList = array_map('trim', $tldList);
+                // Si la TLD extraída no está en la lista, marcar como spam
+                if (!in_array($tld, $tldList)) {
+                    $isSpam = true;
+                    break;
+                }
+            } else {
+                // Si no se pudo obtener la lista, se considera el email inválido
+                $isSpam = true;
+                break;
+            }
         }
     }
 }
@@ -146,7 +158,7 @@ if (!is_dir($spamFolder)) {
 }
 
 // Guardar los datos del formulario como JSON
-$jsonData     = json_encode($dataForJson, JSON_PRETTY_PRINT);
+$jsonData = json_encode($dataForJson, JSON_PRETTY_PRINT);
 $filename = date('Y-m-d-H-i-s') . '.json';
 
 $targetFolder = $isSpam ? $spamFolder : $incomingFolder;
@@ -161,7 +173,6 @@ if (!$isSpam && $shouldSendEmail) {
         echo "Fallo al conectar con el servidor SMTP: $errstr ($errno)\n";
         exit;
     }
-
     // Leer la respuesta inicial del servidor
     $response = '';
     while ($line = fgets($connection, 1024)) {
