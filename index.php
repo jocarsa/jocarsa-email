@@ -44,7 +44,7 @@ if (!isset($_SESSION['loggedin'])) {
     margin: 120px auto; 
     padding: 20px; 
     background: #E0FFFF; /* was #fff */
-    border-radius: 5px; 
+    border-radius: 225px 225px 5px 5px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
 }
 input[type="text"], input[type="password"] { 
@@ -73,12 +73,16 @@ input[type="submit"]:hover {
 input {
     box-sizing: border-box;
 }
+.login-container img{
+	width:100%;
+}
 
       </style>
     </head>
     <body>
        <div class="login-container">
-         <h2 style="text-align:center;">Login</h2>
+       <img src="paleturquoise.png">
+         <h2 style="text-align:center;">jocarsa | paleturquoise</h2>
          <?php if(isset($error)) { echo "<p class='error'>$error</p>"; } ?>
          <form method="post" action="index.php">
             <input type="text" name="username" placeholder="Usuario" required>
@@ -172,6 +176,7 @@ body {
     background-color: #AFEEEE; /* was #f4f7f9 */
     color: #333;
 }
+
 /* Header styles */
 #header {
     background-color: #008B8B; /* was #34495e */
@@ -193,11 +198,19 @@ body {
     padding: 20px;
     box-sizing: border-box;
     padding-right: 0px;
+    box-shadow:-30px 0px 30px rgba(0,0,0,0.3) inset;
 }
 #nav h3 {
-    color: #ffffff;           /* was #ecf0f1 */
+          /* was #ecf0f1 */
     margin-top: 0;
     margin-bottom: 15px;
+    background:#F0FFFF;
+    color:black;
+    width:calc(100% - 60px);
+    border-radius:50px;
+    padding:10px;
+    text-align:center;
+    box-shadow:-30px 0px 30px rgba(0,0,0,0.3);
 }
 #nav a {
     display: block;
@@ -205,7 +218,7 @@ body {
     margin: 8px 0;
    
     color: #fff;
-    border-radius: 4px 0px 0px 4px;
+    border-radius: 34px 0px 0px 34px;
     text-decoration: none;
     transition: background-color 0.3s ease;
 }
@@ -215,6 +228,7 @@ body {
 #nav .activo {
     background-color: #698f8f; /* was #ecf0f1 */
     color: #ffffff;            /* was #34495e */
+    box-shadow:-10px 0px 10px rgba(0,0,0,0.3);
 }
 /* Container layout for email client */
 #container {
@@ -229,6 +243,7 @@ body {
     background-color: #698f8f; /* was #ecf0f1 */
     box-sizing: border-box;
     padding-right: 0px;
+    box-shadow:-30px 0px 30px rgba(0,0,0,0.3) inset;
 }
 #emailList h3 {
     margin-top: 0;
@@ -254,6 +269,8 @@ body {
 .selected {
     background-color: #F0FFFF; /* was #ffffff */
     position: relative;
+    border-radius:50px 0px 0px 50px;
+     box-shadow:-10px 0px 10px rgba(0,0,0,0.3);
 }
 /* Email content styling */
 #emailContent {
@@ -470,7 +487,7 @@ input {
                 <?php foreach ($emailList as $emailFile): ?>
                     <li class="email-item <?php echo ($file === $emailFile) ? 'selected' : ''; ?>">
                         <a href="index.php?folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($emailFile); ?>">
-                            <?php echo htmlspecialchars($emailFile); ?>
+                            <?php echo str_replace(".json","",htmlspecialchars($emailFile)); ?>
                         </a>
                     </li>
                 <?php endforeach; ?>
