@@ -37,7 +37,7 @@ if (!isset($_SESSION['loggedin'])) {
       @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
          body { 
     font-family: Ubuntu, sans-serif; 
-    background-color: #AFEEEE; /* was #f7f7f7 */
+    background-color: #698f8f; /* was #f7f7f7 */
 }
 .login-container { 
     width: 320px; 
