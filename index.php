@@ -256,7 +256,7 @@ body {
 }
 .email-item {
     padding: 12px;
-    border-bottom: 1px solid #B0E0E6; /* was #ccc */
+    
 }
 .email-item a {
     color: #004C4C; /* was #2c3e50 */
@@ -265,6 +265,7 @@ body {
 }
 .email-item:hover {
     background-color: #D0F0F8; /* was #d0dce3 */
+    border-radius:50px 0px 0px 50px;
 }
 .selected {
     background-color: #F0FFFF; /* was #ffffff */
