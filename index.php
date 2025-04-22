@@ -249,21 +249,34 @@ if (isset($_GET['logout'])) {
             const btn = document.createElement('button');
             btn.textContent = 'Eliminar';
             btn.addEventListener('click', () => {
-                fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
-                    .then(res => res.json())
-                    .then(r => {
-                        //alert(r.message);
-                        // Eliminar el <li> seleccionado del DOM
-                        const selectedLi = document.querySelector('#emailList li.selected');
-                        if (selectedLi) selectedLi.remove();
-                        // Limpiar el contenido
-                        contentBody.innerHTML = '';
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Error al eliminar el correo.');
-                    });
-            });
+				 fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
+					  .then(res => res.json())
+					  .then(r => {
+						   // 1. Encontrar el <li> actualmente seleccionado
+						   const selectedLi = document.querySelector('#emailList li.selected');
+						   if (!selectedLi) return;
+
+						   // 2. Calcular cuál será el siguiente a abrir:
+						   //    primero intento con el siguiente hermano, si no existe uso el anterior
+						   const nextLi = selectedLi.nextElementSibling || selectedLi.previousElementSibling;
+
+						   // 3. Eliminar el elemento seleccionado
+						   selectedLi.remove();
+
+						   if (nextLi) {
+						       // 4a. Si hay un siguiente <li>, disparar su click para cargarlo
+						       nextLi.querySelector('a').click();
+						   } else {
+						       // 4b. Si no hay más correos, limpiar el área de contenido
+						       contentBody.innerHTML = '';
+						       contentTitle.textContent = 'Contenido';
+						   }
+					  })
+					  .catch(err => {
+						   console.error(err);
+						   alert('Error al eliminar el correo.');
+					  });
+			});
             contentBody.appendChild(btn);
         }
 
