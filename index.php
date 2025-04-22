@@ -1,528 +1,316 @@
 <?php
 session_start();
-
-// --- Authentication ---
-$validUser = "jocarsa";
-$validPass = "jocarsa";
-
-// Handle logout
 if (isset($_GET['logout'])) {
     session_destroy();
-    header("Location: index.php");
+    header('Location: index.php');
     exit;
-}
-
-// If not logged in, process login
-if (!isset($_SESSION['loggedin'])) {
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $username = isset($_POST['username']) ? $_POST['username'] : '';
-        $password = isset($_POST['password']) ? $_POST['password'] : '';
-        if ($username === $validUser && $password === $validPass) {
-            $_SESSION['loggedin'] = true;
-            header("Location: index.php");
-            exit;
-        } else {
-            $error = "Credenciales inválidas";
-        }
-    }
-    // Display login form if not logged in.
-    ?>
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Login</title>
-      <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
-      <style>
-      @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
-         body { 
-    font-family: Ubuntu, sans-serif; 
-    background-color: #698f8f; /* was #f7f7f7 */
-}
-.login-container { 
-    width: 320px; 
-    margin: 120px auto; 
-    padding: 20px; 
-    background: #E0FFFF; /* was #fff */
-    border-radius: 225px 225px 5px 5px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
-}
-input[type="text"], input[type="password"] { 
-    width: 100%; 
-    padding: 10px; 
-    margin-bottom: 15px; 
-    border: 1px solid #B0E0E6; /* was #ccc */
-    border-radius: 3px; 
-}
-input[type="submit"] { 
-    width: 100%; 
-    padding: 10px; 
-    background: #20B2AA; /* was #4CAF50 */
-    color: #fff; 
-    border: none; 
-    border-radius: 3px; 
-    cursor: pointer; 
-}
-input[type="submit"]:hover { 
-    background: #008B8B; /* was #45a049 */
-}
-.error { 
-    color: #006666; /* was red */
-    text-align: center; 
-}
-input {
-    box-sizing: border-box;
-}
-.login-container img{
-	width:100%;
-}
-
-      </style>
-    </head>
-    <body>
-       <div class="login-container">
-       <img src="paleturquoise.png">
-         <h2 style="text-align:center;">jocarsa | paleturquoise</h2>
-         <?php if(isset($error)) { echo "<p class='error'>$error</p>"; } ?>
-         <form method="post" action="index.php">
-            <input type="text" name="username" placeholder="Usuario" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            <input type="submit" value="Ingresar">
-         </form>
-       </div>
-    </body>
-    </html>
-    <?php
-    exit;
-}
-
-// --- Email Deletion Action ---
-// (Keep your existing email deletion code here)
-if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    if (isset($_GET['folder']) && ($_GET['folder'] === 'incoming' || $_GET['folder'] === 'spam') && isset($_GET['file'])) {
-        $folderToDelete = $_GET['folder'];
-        $fileToDelete = basename($_GET['file']);
-        $filePath = "mail/$folderToDelete/$fileToDelete";
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-    }
-    // Redirect back to the folder view after deletion
-    header("Location: index.php?folder=" . urlencode($_GET['folder']));
-    exit;
-}
-
-// --- SPAM WORDS MANAGEMENT CRUD ---
-// If the URL includes manage=spamwords, process spam word actions.
-if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords') {
-    // Process only add, delete, and update actions. (The 'edit' action is only for displaying the inline form.)
-    if (isset($_REQUEST['actionSpam']) && $_REQUEST['actionSpam'] !== 'editSpam') {
-        $actionSpam = $_REQUEST['actionSpam'];
-        $spamFilePath = 'spamfilter.txt';
-        $spamWords = [];
-        if (file_exists($spamFilePath)) {
-            $spamWords = file($spamFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        }
-        switch ($actionSpam) {
-            case 'addSpam':
-                if (isset($_POST['newSpam'])) {
-                    $newSpam = trim($_POST['newSpam']);
-                    if ($newSpam !== '' && !in_array($newSpam, $spamWords)) {
-                        $spamWords[] = $newSpam;
-                        file_put_contents($spamFilePath, implode("\n", $spamWords) . "\n");
-                    }
-                }
-                break;
-            case 'deleteSpam':
-                if (isset($_GET['index'])) {
-                    $index = intval($_GET['index']);
-                    if (isset($spamWords[$index])) {
-                        unset($spamWords[$index]);
-                        $spamWords = array_values($spamWords);
-                        file_put_contents($spamFilePath, implode("\n", $spamWords) . "\n");
-                    }
-                }
-                break;
-            case 'updateSpam':
-                if (isset($_POST['index']) && isset($_POST['updatedSpam'])) {
-                    $index = intval($_POST['index']);
-                    $updatedSpam = trim($_POST['updatedSpam']);
-                    if (isset($spamWords[$index]) && $updatedSpam !== '') {
-                        $spamWords[$index] = $updatedSpam;
-                        file_put_contents($spamFilePath, implode("\n", $spamWords) . "\n");
-                    }
-                }
-                break;
-        }
-        // Redirect to clear form submissions and avoid reprocessing
-        header("Location: index.php?manage=spamwords");
-        exit;
-    }
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>jocarsa | paleturquoise</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jocarsa | paleturquoise Control Panel</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
     <style>
     @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
-    @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
-/* General layout styling */
-body {
-    margin: 0;
-    font-family: Ubuntu, sans-serif;
-    background-color: #AFEEEE; /* was #f4f7f9 */
-    color: #333;
-}
 
-/* Header styles */
-#header {
-    background-color: #008B8B; /* was #34495e */
-    color: #ffffff;           /* was #ecf0f1 */
-    padding: 15px 20px;
-    text-align: center;
-    font-size: 1.4em;
-}
-#header a {
-    color: #ffffff;           /* was #ecf0f1 */
-    text-decoration: none;
-    margin-left: 20px;
-    font-size: 0.8em;
-}
-/* Navigation styles */
-#nav {
-    width: 220px;
-    background-color: #354747; /* was #34495e */
-    padding: 20px;
-    box-sizing: border-box;
-    padding-right: 0px;
-    box-shadow:-30px 0px 30px rgba(0,0,0,0.3) inset;
-}
-#nav h3 {
-          /* was #ecf0f1 */
-    margin-top: 0;
-    margin-bottom: 15px;
-    background:#F0FFFF;
-    color:black;
-    width:calc(100% - 60px);
-    border-radius:50px;
-    padding:10px;
-    text-align:center;
-    box-shadow:-30px 0px 30px rgba(0,0,0,0.3);
-}
-#nav a {
-    display: block;
-    padding: 12px 15px;
-    margin: 8px 0;
-   
-    color: #fff;
-    border-radius: 34px 0px 0px 34px;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
-}
-#nav a:hover {
-    background-color: #006666; /* was #2a4887 */
-}
-#nav .activo {
-    background-color: #698f8f; /* was #ecf0f1 */
-    color: #ffffff;            /* was #34495e */
-    box-shadow:-10px 0px 10px rgba(0,0,0,0.3);
-}
-/* Container layout for email client */
-#container {
-    display: flex;
-    height: calc(100vh - 0px);
-}
-/* Email list styling */
-#emailList {
-    width: 320px;
-    padding: 20px;
-    overflow-y: auto;
-    background-color: #698f8f; /* was #ecf0f1 */
-    box-sizing: border-box;
-    padding-right: 0px;
-    box-shadow:-30px 0px 30px rgba(0,0,0,0.3) inset;
-}
-#emailList h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-#emailList ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.email-item {
-    padding: 12px;
-    
-}
-.email-item a {
-    color: #004C4C; /* was #2c3e50 */
-    text-decoration: none;
-    display: block;
-}
-.email-item:hover {
-    background-color: #D0F0F8; /* was #d0dce3 */
-    border-radius:50px 0px 0px 50px;
-}
-.selected {
-    background-color: #F0FFFF; /* was #ffffff */
-    position: relative;
-    border-radius:50px 0px 0px 50px;
-     box-shadow:-10px 0px 10px rgba(0,0,0,0.3);
-}
-/* Email content styling */
-#emailContent {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    background-color: #F0FFFF; /* was #fff */
-    box-sizing: border-box;
-}
-#emailContent h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-/* Enhanced table styles for JSON content presentation */
-#emailContent table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-#emailContent th, 
-#emailContent td {
-    border: 1px solid #B0E0E6; /* was #ddd */
-    padding: 10px 12px;
-    text-align: left;
-    vertical-align: top;
-}
-#emailContent th {
-    background-color: #698f8f; /* was #2980b9 */
-    color: #fff;
-}
-#emailContent tr:nth-child(even) {
-    background-color: rgb(250,250,250); /* was #f9f9f9 */
-}
-/* Delete button styling */
-.delete-button {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 8px 12px;
-    background-color: #698f8f;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-}
-.delete-button:hover {
-    background-color: #20B2AA; /* was #c0392b */
-}
-/* Spam management section styling */
-#spamManagement {
-    width: 100%;
-    padding: 20px;
-    box-sizing: border-box;
-}
-#spamManagement h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-#spamManagement table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-top: 20px;
-}
-#spamManagement table, 
-#spamManagement th, 
-#spamManagement td {
-    border: 1px solid #B0E0E6; /* was #bdc3c7 */
-    padding: 10px;
-}
-#spamManagement th {
-    background-color: #008B8B; /* was #2980b9 */
-    color: #fff;
-}
-.action-link {
-    margin-right: 10px;
-    text-decoration: none;
-    color: #008B8B; /* was #2980b9 */
-}
-.action-link:hover {
-    text-decoration: underline;
-}
-.form-inline input[type="text"] {
-    padding: 6px;
-    margin-right: 6px;
-}
-.form-inline input[type="submit"] {
-    padding: 6px 10px;
-}
-input {
-    box-sizing: border-box;
-}
+    body {
+        margin: 0;
+        font-family: Ubuntu, sans-serif;
+        background-color: #AFEEEE;
+        color: #333;
+    }
+    #container {
+        display: flex;
+        height: 100vh;
+    }
+    /* Column widths: 25%, 25%, 50% */
+    #nav {
+        flex: 0 0 25%;
+        overflow-y: auto;
+        box-sizing: border-box;
+        padding: 20px;
+        background-color: #354747;
+        padding-right: 0px;
+    }
+    #emailList {
+        flex: 0 0 25%;
+        overflow-y: auto;
+        box-sizing: border-box;
+        padding: 20px;
+        background-color: #698f8f;
+        padding-right: 0px;
+    }
+    #content {
+        flex: 0 0 50%;
+        overflow-y: auto;
+        box-sizing: border-box;
+        padding: 20px;
+        background-color: #F0FFFF;
+    }
+    /* Navigation Column Styles */
+    #nav h3 {
+        margin: 0 0 15px;
+        background: #F0FFFF;
+        color: black;
+        width: calc(100% - 60px);
+        border-radius: 50px;
+        padding: 10px;
+        text-align: center;
+        box-shadow: -30px 0px 30px rgba(0,0,0,0.3);
+    }
+    #nav a {
+        display: block;
+        padding: 12px 15px;
+        margin: 8px 0;
+        color: #fff;
+        border-radius: 34px 0 0 34px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    #nav a:hover,
+    #nav a.active {
+        background-color: #698f8f;
+    }
 
-</style>
+    /* Email List Styles */
+    #emailList h3 {
+        margin: 0 0 15px;
+        color: #fff;
+    }
+    #emailList ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    #emailList li {
+        padding: 12px;
+        border-radius: 34px 0 0 34px;
+    }
+    #emailList li:hover {
+        background-color: #D0F0F8;
+    }
+    #emailList li.selected {
+        background-color: #F0FFFF;
+        box-shadow: -10px 0px 10px rgba(0,0,0,0.3);
+    }
+    #emailList li a {
+        color: #004C4C;
+        text-decoration: none;
+        display: block;
+    }
 
+    /* Content Column Styles */
+    #content h3 {
+        margin: 0 0 15px;
+        color: #4CAF50;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid #B0E0E6;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+    }
+    th {
+        background-color: #698f8f;
+        color: #fff;
+    }
+    tr:nth-child(even) {
+        background-color: rgb(250,250,250);
+    }
+    button {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 8px 12px;
+        background-color: #698f8f;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #20B2AA;
+    }
+    form input[type="text"] {
+        padding: 6px;
+        margin-right: 6px;
+        border: 1px solid #B0E0E6;
+        border-radius: 3px;
+    }
+    form button {
+        padding: 6px 10px;
+        border-radius: 3px;
+    }
+    </style>
 </head>
 <body>
- 
     <div id="container">
-        <!-- Left Navigation: Folder list and Spam Words link -->
         <div id="nav">
-        
             <h3>paleturquoise</h3>
-            <a href="index.php?folder=incoming" <?php echo (@$_GET['folder'] == 'incoming') ? 'class="activo"' : ''; ?>>Recibidos</a>
-				<a href="index.php?folder=spam" <?php echo (@$_GET['folder'] == 'spam') ? 'class="activo"' : ''; ?>>Spam</a>
-				<a href="index.php?manage=spamwords" <?php echo (isset($_GET['manage']) && @$_GET['manage'] == 'spamwords') ? 'class="activo"' : ''; ?>>Palabras de Spam</a>
-				<a href="index.php?logout=1">Cerrar sesión</a>
+            <a href="#" data-action="folder" data-folder="incoming" class="active">Recibidos</a>
+            <a href="#" data-action="folder" data-folder="spam">Spam</a>
+            <a href="#" data-action="spamwords">Palabras de Spam</a>
+            <a href="?logout=1">Cerrar sesión</a>
         </div>
-
-        <?php if (isset($_GET['manage']) && $_GET['manage'] === 'spamwords'): 
-            // Load spam words for display
-            $spamFilePath = 'spamfilter.txt';
-            $spamWords = [];
-            if (file_exists($spamFilePath)) {
-                $spamWords = file($spamFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            }
-            // Check if an edit request was made via GET
-            $editIndex = null;
-            if (isset($_GET['actionSpam']) && $_GET['actionSpam'] === 'editSpam' && isset($_GET['index'])) {
-                $editIndex = intval($_GET['index']);
-            }
-        ?>
-        <!-- SPAM WORDS MANAGEMENT INTERFACE -->
-        <div id="spamManagement">
-            <h3>Gestión de Spam</h3>
-            <!-- Form to add a new spam word -->
-            <form method="post" action="index.php?manage=spamwords&actionSpam=addSpam" class="form-inline">
-                <input type="text" name="newSpam" placeholder="Nuevo spam word" required>
-                <input type="submit" value="Agregar">
-            </form>
-            <!-- Table displaying current spam words -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Palabra de Spam</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($spamWords)): ?>
-                        <tr>
-                            <td colspan="3">No hay spam words definidos.</td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($spamWords as $index => $word): ?>
-                        <tr>
-                            <td><?php echo $index + 1; ?></td>
-                            <td>
-                                <?php if ($editIndex === $index): ?>
-                                    <!-- Inline edit form -->
-                                    <form method="post" action="index.php?manage=spamwords&actionSpam=updateSpam" class="form-inline">
-                                        <input type="hidden" name="index" value="<?php echo $index; ?>">
-                                        <input type="text" name="updatedSpam" value="<?php echo htmlspecialchars($word); ?>" required>
-                                        <input type="submit" value="Guardar">
-                                    </form>
-                                <?php else: ?>
-                                    <?php echo htmlspecialchars($word); ?>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($editIndex !== $index): ?>
-                                    <a class="action-link" href="index.php?manage=spamwords&actionSpam=editSpam&index=<?php echo $index; ?>">Editar</a>
-                                    <a class="action-link" href="index.php?manage=spamwords&actionSpam=deleteSpam&index=<?php echo $index; ?>" onclick="return confirm('¿Seguro que deseas eliminar esta palabra?');">Eliminar</a>
-                                <?php else: ?>
-                                    <a class="action-link" href="index.php?manage=spamwords" title="Cancelar edición">Cancelar</a>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php else: 
-            // --- EMAIL CLIENT INTERFACE (existing) ---
-            // Get selected folder and file from GET parameters
-            $folder = isset($_GET['folder']) ? $_GET['folder'] : '';
-            $file = isset($_GET['file']) ? $_GET['file'] : '';
-
-            // Allow only "incoming" or "spam" as valid folder values
-            if ($folder !== 'incoming' && $folder !== 'spam') {
-                $folder = '';
-            }
-
-            $baseDir = 'mail'; // Base folder where emails are stored
-            $folderPath = $folder ? $baseDir . '/' . $folder : '';
-
-            // If a file is selected, verify it exists and load its content
-            $emailData = null;
-            if ($folder && $file) {
-                $filePath = $folderPath . '/' . basename($file);
-                if (file_exists($filePath)) {
-                    $jsonContent = file_get_contents($filePath);
-                    $emailData = json_decode($jsonContent, true);
-                }
-            }
-
-            // If a folder is selected, get the list of email files
-            $emailList = [];
-            if ($folder && is_dir($folderPath)) {
-                $files = glob($folderPath . '/*.json');
-                usort($files, function($a, $b) {
-                    return filemtime($b) - filemtime($a);
-                });
-                foreach ($files as $f) {
-                    $emailList[] = basename($f);
-                }
-            }
-        ?>
-        <!-- Email Client Interface -->
         <div id="emailList">
-            <h3>Lista de correos</h3>
-            <?php if ($folder): ?>
-                <ul>
-                <?php foreach ($emailList as $emailFile): ?>
-                    <li class="email-item <?php echo ($file === $emailFile) ? 'selected' : ''; ?>">
-                        <a href="index.php?folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($emailFile); ?>">
-                            <?php echo str_replace(".json","",htmlspecialchars($emailFile)); ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <p>Selecciona una capeta de la columna de la izquierda</p>
-            <?php endif; ?>
+            <h3 id="listTitle">Recibidos</h3>
+            <ul id="listItems"></ul>
         </div>
-        <div id="emailContent">
-            <h3>Contenido del correo</h3>
-            <?php if ($emailData): ?>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Clave</th>
-                            <th>Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($emailData as $key => $value): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($key); ?></td>
-                            <td><?php echo htmlspecialchars($value); ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <a class="delete-button" href="index.php?action=delete&folder=<?php echo urlencode($folder); ?>&file=<?php echo urlencode($file); ?>" onclick="return confirm('¿Seguro que deseas eliminar este correo?');">Delete Email</a>
-            <?php else: ?>
-                <p>Selecciona un correo para ver su contenido</p>
-            <?php endif; ?>
+        <div id="content">
+            <h3 id="contentTitle">Contenido</h3>
+            <div id="contentBody"></div>
         </div>
-        <?php endif; ?>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const navLinks = document.querySelectorAll('#nav a[data-action]');
+        const listTitle = document.getElementById('listTitle');
+        const listItems = document.getElementById('listItems');
+        const contentTitle = document.getElementById('contentTitle');
+        const contentBody = document.getElementById('contentBody');
+        let currentFolder = 'incoming';
+
+        loadFolder('incoming');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                clearAll();
+                const action = link.dataset.action;
+                if (action === 'folder') {
+                    currentFolder = link.dataset.folder;
+                    loadFolder(currentFolder);
+                } else if (action === 'spamwords') {
+                    loadSpamwords();
+                }
+            });
+        });
+
+        function clearAll() {
+            listItems.innerHTML = '';
+            contentBody.innerHTML = '';
+            contentTitle.textContent = 'Contenido';
+        }
+
+        function loadFolder(folder) {
+            listTitle.textContent = folder === 'incoming' ? 'Recibidos' : 'Spam';
+            fetch(`api/emails.php?folder=${folder}`)
+                .then(res => res.json())
+                .then(files => files.forEach(file => {
+                    const li = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.textContent = file.replace('.json','');
+                    li.dataset.folder = folder;
+                    li.dataset.file = file;
+                    li.appendChild(link);
+                    li.addEventListener('click', onEmailClick);
+                    listItems.appendChild(li);
+                }));
+        }
+
+        function onEmailClick() {
+            [...listItems.children].forEach(li => li.classList.remove('selected'));
+            this.classList.add('selected');
+            const { folder, file } = this.dataset;
+            contentTitle.textContent = file.replace('.json','');
+            fetch(`api/emails.php?folder=${folder}&file=${file}`)
+                .then(res => res.json())
+                .then(data => renderEmail({ ...data, _folder: folder, _file: file }));
+        }
+
+        function renderEmail(data) {
+            contentBody.innerHTML = '';
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            ['Clave','Valor'].forEach(text => {
+                const th = document.createElement('th'); th.textContent = text; headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow); table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            Object.entries(data).filter(([k]) => !k.startsWith('_')).forEach(([key,value]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${key}</td><td>${value}</td>`;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            contentBody.appendChild(table);
+            const btn = document.createElement('button'); btn.textContent = 'Eliminar';
+            btn.addEventListener('click', () => {
+                if (confirm('¿Seguro que deseas eliminar este correo?')) {
+                    fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
+                        .then(res => res.json()).then(r => {
+                            alert(r.message);
+                            loadFolder(data._folder);
+                            contentBody.innerHTML = '';
+                        });
+                }
+            });
+            contentBody.appendChild(btn);
+        }
+
+        function loadSpamwords() {
+            listTitle.textContent = 'Palabras de Spam';
+            fetch('api/spamwords.php')
+                .then(res => res.json())
+                .then(words => {
+                    listItems.innerHTML = '';
+                    words.forEach((w,i) => {
+                        const li = document.createElement('li'); li.textContent = w; li.dataset.index = i;
+                        li.addEventListener('click', onSpamwordClick);
+                        listItems.appendChild(li);
+                    });
+                    showAddSpamForm();
+                });
+        }
+        function onSpamwordClick() {
+            [...listItems.children].forEach(li => li.classList.remove('selected'));
+            this.classList.add('selected');
+            const i = this.dataset.index;
+            contentTitle.textContent = 'Editar Palabra'; contentBody.innerHTML = '';
+            fetch(`api/spamwords.php?index=${i}`)
+                .then(res => res.json()).then(word => showEditSpamForm(i, word));
+        }
+        function showAddSpamForm() {
+            contentTitle.textContent = 'Agregar Palabra'; contentBody.innerHTML = '';
+            const form = document.createElement('form');
+            form.innerHTML = '<input type="text" name="newSpam" placeholder="Nueva palabra" required> <button type="submit">Agregar</button>';
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const w = form.newSpam.value.trim();
+                fetch('api/spamwords.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({word: w}) })
+                    .then(res => res.json()).then(r => { alert(r.message); loadSpamwords(); });
+            });
+            contentBody.appendChild(form);
+        }
+        function showEditSpamForm(i, w) {
+            const form = document.createElement('form');
+            form.innerHTML = `<input type="text" name="updatedSpam" value="${w}" required> <button type="submit">Guardar</button> <button type="button" id="del">Eliminar</button>`;
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const nw = form.updatedSpam.value.trim();
+                fetch(`api/spamwords.php?index=${i}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({word: nw}) })
+                    .then(res => res.json()).then(r => { alert(r.message); loadSpamwords(); });
+            });
+            form.querySelector('#del').addEventListener('click', () => {
+                if (confirm('¿Eliminar esta palabra?')) {
+                    fetch(`api/spamwords.php?index=${i}`, { method:'DELETE' })
+                        .then(res => res.json()).then(r => { alert(r.message); loadSpamwords(); });
+                }
+            });
+            contentBody.innerHTML = '';
+            contentBody.appendChild(form);
+        }
+    });
+    </script>
 </body>
 </html>
-
