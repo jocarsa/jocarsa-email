@@ -244,16 +244,25 @@ if (isset($_GET['logout'])) {
             });
             table.appendChild(tbody);
             contentBody.appendChild(table);
-            const btn = document.createElement('button'); btn.textContent = 'Eliminar';
+
+            // Botón para eliminar sin confirmación y remover el <li> inmediatamente
+            const btn = document.createElement('button');
+            btn.textContent = 'Eliminar';
             btn.addEventListener('click', () => {
-                if (confirm('¿Seguro que deseas eliminar este correo?')) {
-                    fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
-                        .then(res => res.json()).then(r => {
-                            alert(r.message);
-                            loadFolder(data._folder);
-                            contentBody.innerHTML = '';
-                        });
-                }
+                fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(r => {
+                        alert(r.message);
+                        // Eliminar el <li> seleccionado del DOM
+                        const selectedLi = document.querySelector('#emailList li.selected');
+                        if (selectedLi) selectedLi.remove();
+                        // Limpiar el contenido
+                        contentBody.innerHTML = '';
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Error al eliminar el correo.');
+                    });
             });
             contentBody.appendChild(btn);
         }
@@ -314,3 +323,4 @@ if (isset($_GET['logout'])) {
     </script>
 </body>
 </html>
+
