@@ -252,7 +252,7 @@ if (isset($_GET['logout'])) {
                 fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
                     .then(res => res.json())
                     .then(r => {
-                        alert(r.message);
+                        //alert(r.message);
                         // Eliminar el <li> seleccionado del DOM
                         const selectedLi = document.querySelector('#emailList li.selected');
                         if (selectedLi) selectedLi.remove();
