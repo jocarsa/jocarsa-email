@@ -18,13 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>jocarsa | darksalmon</title>
-    <link rel="icon" href="../darksalmon.png" type="image/x-icon">
+    <title>jocarsa | paleturquoise</title>
+    <link rel="icon" href="../paleturquoise.png" type="image/x-icon">
     <!-- PNG Favicon for Browsers -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../darksalmon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../darksalmon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../paleturquoise.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../paleturquoise.png">
     <!-- Apple Touch Icon (iOS) -->
-    <link rel="apple-touch-icon" sizes="180x180" href="../darksalmon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../paleturquoise.png">
     <style>
         @import url('https://static.jocarsa.com/fuentes/ubuntu-font-family-0.83/ubuntu.css');
         * {
@@ -34,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 0;
             margin: 0;
             height: 100%;
-            background: DarkSalmon;
-            background: linear-gradient(0deg, rgba(124,80,65,1) 0%, rgba(233,150,122,1) 100%);
+            background: #AFEEEE; /* Paleturquoise background */
+            background: linear-gradient(0deg, #354747 0%, #698f8f 100%);
         }
         body {
             display: flex;
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         form h2 {
             margin-top: 0;
-            color: DarkSalmon;
+            color: #458B74; /* Paleturquoise color */
         }
         label {
             width: 100%;
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 15px;
             cursor: pointer;
             color: white;
-            background: darksalmon;
+            background: #458B74; /* Paleturquoise color */
         }
         .login-btn:hover {
             filter: brightness(110%);
@@ -109,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <form method="POST" action="login.php">
-        <img src="../darksalmon.png" alt="Logo">
-        <h2>jocarsa | darksalmon</h2>
+        <img src="paleturquoise.png" alt="Logo">
+        <h2>jocarsa | paleturquoise</h2>
         <label for="username">Usuario:</label>
         <input type="text" name="usuario" id="username" required>
         <label for="password">Contraseña:</label>

@@ -25,7 +25,7 @@ if (isset($_GET['logout'])) {
     body {
         margin: 0;
         font-family: Ubuntu, sans-serif;
-        background-color: #AFEEEE;
+        background-color: #AFEEEE; /* Paleturquoise background */
         color: #333;
     }
     #container {
@@ -34,7 +34,7 @@ if (isset($_GET['logout'])) {
     }
     /* Column widths: 25%, 25%, 50% */
     #nav {
-        flex: 0 0 25%;
+        flex: 0 0 15%;
         overflow-y: auto;
         box-sizing: border-box;
         padding: 20px;
@@ -42,7 +42,7 @@ if (isset($_GET['logout'])) {
         padding-right: 0px;
     }
     #emailList {
-        flex: 0 0 25%;
+        flex: 0 0 15%;
         overflow-y: auto;
         box-sizing: border-box;
         padding: 20px;
@@ -50,7 +50,7 @@ if (isset($_GET['logout'])) {
         padding-right: 0px;
     }
     #content {
-        flex: 0 0 50%;
+        flex: 0 0 70%;
         overflow-y: auto;
         box-sizing: border-box;
         padding: 20px;
@@ -111,7 +111,7 @@ if (isset($_GET['logout'])) {
     /* Content Column Styles */
     #content h3 {
         margin: 0 0 15px;
-        color: #4CAF50;
+        color: #458B74; /* Paleturquoise color */
     }
     .email-header {
         display: flex;
