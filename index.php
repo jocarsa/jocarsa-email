@@ -107,6 +107,27 @@ if (isset($_GET['logout'])) {
         margin: 0 0 15px;
         color: #4CAF50;
     }
+    .email-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .email-header h3 {
+        margin: 0;
+    }
+    .email-header button {
+        padding: 6px 12px;
+        background-color: #f44336;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .email-header button:hover {
+        background-color: #c62828;
+    }
     table {
         width: 100%;
         border-collapse: collapse;
@@ -165,7 +186,10 @@ if (isset($_GET['logout'])) {
             <ul id="listItems"></ul>
         </div>
         <div id="content">
-            <h3 id="contentTitle">Contenido</h3>
+            <div class="email-header">
+                <h3 id="contentTitle">Contenido</h3>
+                <button id="deleteEmailButton">Eliminar</button>
+            </div>
             <div id="contentBody"></div>
         </div>
     </div>
@@ -176,7 +200,9 @@ if (isset($_GET['logout'])) {
         const listItems = document.getElementById('listItems');
         const contentTitle = document.getElementById('contentTitle');
         const contentBody = document.getElementById('contentBody');
+        const deleteEmailButton = document.getElementById('deleteEmailButton');
         let currentFolder = 'incoming';
+        let currentFile = null;
 
         loadFolder('incoming');
         navLinks.forEach(link => {
@@ -195,10 +221,44 @@ if (isset($_GET['logout'])) {
             });
         });
 
+        deleteEmailButton.addEventListener('click', () => {
+            if (currentFile) {
+                fetch(`api/emails.php?folder=${currentFolder}&file=${currentFile}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(r => {
+                        // 1. Encontrar el <li> actualmente seleccionado
+                        const selectedLi = document.querySelector('#emailList li.selected');
+                        if (!selectedLi) return;
+
+                        // 2. Calcular cuál será el siguiente a abrir:
+                        //    primero intento con el siguiente hermano, si no existe uso el anterior
+                        const nextLi = selectedLi.nextElementSibling || selectedLi.previousElementSibling;
+
+                        // 3. Eliminar el elemento seleccionado
+                        selectedLi.remove();
+
+                        if (nextLi) {
+                            // 4a. Si hay un siguiente <li>, disparar su click para cargarlo
+                            nextLi.querySelector('a').click();
+                        } else {
+                            // 4b. Si no hay más correos, limpiar el área de contenido
+                            contentBody.innerHTML = '';
+                            contentTitle.textContent = 'Contenido';
+                            currentFile = null;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Error al eliminar el correo.');
+                    });
+            }
+        });
+
         function clearAll() {
             listItems.innerHTML = '';
             contentBody.innerHTML = '';
             contentTitle.textContent = 'Contenido';
+            currentFile = null;
         }
 
         function loadFolder(folder) {
@@ -222,6 +282,7 @@ if (isset($_GET['logout'])) {
             this.classList.add('selected');
             const { folder, file } = this.dataset;
             contentTitle.textContent = file.replace('.json','');
+            currentFile = file;
             fetch(`api/emails.php?folder=${folder}&file=${file}`)
                 .then(res => res.json())
                 .then(data => renderEmail({ ...data, _folder: folder, _file: file }));
@@ -244,40 +305,6 @@ if (isset($_GET['logout'])) {
             });
             table.appendChild(tbody);
             contentBody.appendChild(table);
-
-            // Botón para eliminar sin confirmación y remover el <li> inmediatamente
-            const btn = document.createElement('button');
-            btn.textContent = 'Eliminar';
-            btn.addEventListener('click', () => {
-				 fetch(`api/emails.php?folder=${data._folder}&file=${data._file}`, { method: 'DELETE' })
-					  .then(res => res.json())
-					  .then(r => {
-						   // 1. Encontrar el <li> actualmente seleccionado
-						   const selectedLi = document.querySelector('#emailList li.selected');
-						   if (!selectedLi) return;
-
-						   // 2. Calcular cuál será el siguiente a abrir:
-						   //    primero intento con el siguiente hermano, si no existe uso el anterior
-						   const nextLi = selectedLi.nextElementSibling || selectedLi.previousElementSibling;
-
-						   // 3. Eliminar el elemento seleccionado
-						   selectedLi.remove();
-
-						   if (nextLi) {
-						       // 4a. Si hay un siguiente <li>, disparar su click para cargarlo
-						       nextLi.querySelector('a').click();
-						   } else {
-						       // 4b. Si no hay más correos, limpiar el área de contenido
-						       contentBody.innerHTML = '';
-						       contentTitle.textContent = 'Contenido';
-						   }
-					  })
-					  .catch(err => {
-						   console.error(err);
-						   alert('Error al eliminar el correo.');
-					  });
-			});
-            contentBody.appendChild(btn);
         }
 
         function loadSpamwords() {
