@@ -104,27 +104,27 @@ foreach ($dataForJson as $value) {
     if (strpos($value, '@') !== false) {
         // Limpiar la cadena quitando espacios en blanco al inicio y al final
         $cleanEmail = trim($value);
-        
+
         // Rechazar si hay espacios en medio del email
         if (preg_match('/\s/', $cleanEmail)) {
             $isSpam = true;
             break;
         }
-        
+
         // Validar el formato del email
         if (filter_var($cleanEmail, FILTER_VALIDATE_EMAIL)) {
             // Extraer el dominio del email
             $emailDomain = substr(strrchr($cleanEmail, "@"), 1);
-            
+
             // Verificar que el dominio contenga al menos un punto
             if (strpos($emailDomain, ".") === false) {
                 $isSpam = true;
                 break;
             }
-            
+
             // Extraer la TLD (parte después del último punto) y convertir a mayúsculas
             $tld = strtoupper(substr(strrchr($emailDomain, "."), 1));
-            
+
             // Obtener la lista de TLD válidas desde IANA
             $tldListRaw = file_get_contents("https://data.iana.org/TLD/tlds-alpha-by-domain.txt");
             if ($tldListRaw !== false) {
@@ -142,6 +142,12 @@ foreach ($dataForJson as $value) {
             }
         }
     }
+}
+
+// ----- NUEVO FILTRO: URL DE REFERENCIA -----
+// Verificar si la URL de referencia es "Acceso directo o referencia no establecida"
+if (isset($dataForJson['URL de referencia']) && $dataForJson['URL de referencia'] === 'Acceso directo o referencia no establecida') {
+    $isSpam = true;
 }
 
 // ----- ESTRUCTURA DE CARPETAS Y ALMACENAMIENTO JSON -----
@@ -271,7 +277,7 @@ if (!$isSpam && $shouldSendEmail) {
 
 // ----- MENSAJE DE ÉXITO CON REDIRECCIÓN -----
 // Determinar el protocolo actual
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' 
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
              || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
 
 // Función para extraer el dominio principal
@@ -306,21 +312,21 @@ if (isset($_SERVER['HTTP_REFERER'])) {
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Mensaje Enviado</title>
     <style>
-        body { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: Arial, sans-serif; 
-            background-color: #f7f7f7; 
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
         }
-        .message-box { 
-            background-color: #fff; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-            text-align: center; 
+        .message-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
         .message-box h1 { color: #4CAF50; }
         .message-box p { color: #555; }
