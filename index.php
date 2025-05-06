@@ -11,6 +11,26 @@ if (isset($_GET['logout'])) {
     header('Location: login.php');
     exit;
 }
+
+// Function to count files in a directory
+function countFilesInDirectory($directory) {
+    return count(glob("$directory/*.json"));
+}
+
+// Function to count lines in spamfilter.txt
+function countSpamWords($file) {
+    if (file_exists($file)) {
+        return count(file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
+    }
+    return 0;
+}
+
+// Count files in incoming and spam directories
+$incomingCount = countFilesInDirectory('mail/incoming');
+$spamCount = countFilesInDirectory('mail/spam');
+
+// Count spam words
+$spamWordsCount = countSpamWords('spamfilter.txt');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -69,7 +89,7 @@ if (isset($_GET['logout'])) {
     }
     #nav a {
         display: block;
-        padding: 12px 15px;
+        padding: 6px 6px;
         margin: 8px 0;
         color: #fff;
         border-radius: 34px 0 0 34px;
@@ -176,15 +196,26 @@ if (isset($_GET['logout'])) {
         padding: 6px 10px;
         border-radius: 3px;
     }
+    .contador{
+    	background: white;
+    color: black;
+    width: 33px;
+    display: inline-block;
+    text-align: center;
+    height: 29px;
+    border-radius: 30px;
+    line-height: 29px;
+    margin-right: 5px;
+    }
     </style>
 </head>
 <body>
     <div id="container">
         <div id="nav">
             <h3>paleturquoise</h3>
-            <a href="#" data-action="folder" data-folder="incoming" class="active">Recibidos</a>
-            <a href="#" data-action="folder" data-folder="spam">Spam</a>
-            <a href="#" data-action="spamwords">Palabras de Spam</a>
+            <a href="#" data-action="folder" data-folder="incoming" class="active"><span id="incomingCount" class="contador"><?php echo $incomingCount; ?></span> Recibidos </a>
+            <a href="#" data-action="folder" data-folder="spam"><span id="spamCount" class="contador"><?php echo $spamCount; ?></span> Spam </a>
+            <a href="#" data-action="spamwords"><span id="spamWordsCount" class="contador"><?php echo $spamWordsCount; ?></span> Palabras de Spam</a>
             <a href="?logout=1">Cerrar sesión</a>
         </div>
         <div id="emailList">
@@ -243,6 +274,9 @@ if (isset($_GET['logout'])) {
                         // 3. Eliminar el elemento seleccionado
                         selectedLi.remove();
 
+                        // 4. Actualizar el contador de correos
+                        updateEmailCount(currentFolder, -1);
+
                         if (nextLi) {
                             // 4a. Si hay un siguiente <li>, disparar su click para cargarlo
                             nextLi.querySelector('a').click();
@@ -271,16 +305,18 @@ if (isset($_GET['logout'])) {
             listTitle.textContent = folder === 'incoming' ? 'Recibidos' : 'Spam';
             fetch(`api/emails.php?folder=${folder}`)
                 .then(res => res.json())
-                .then(files => files.forEach(file => {
-                    const li = document.createElement('li');
-                    const link = document.createElement('a');
-                    link.textContent = file.replace('.json','');
-                    li.dataset.folder = folder;
-                    li.dataset.file = file;
-                    li.appendChild(link);
-                    li.addEventListener('click', onEmailClick);
-                    listItems.appendChild(li);
-                }));
+                .then(files => {
+                    files.forEach(file => {
+                        const li = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.textContent = file.replace('.json','');
+                        li.dataset.folder = folder;
+                        li.dataset.file = file;
+                        li.appendChild(link);
+                        li.addEventListener('click', onEmailClick);
+                        listItems.appendChild(li);
+                    });
+                });
         }
 
         function onEmailClick() {
@@ -327,6 +363,7 @@ if (isset($_GET['logout'])) {
                     showAddSpamForm();
                 });
         }
+
         function onSpamwordClick() {
             [...listItems.children].forEach(li => li.classList.remove('selected'));
             this.classList.add('selected');
@@ -335,6 +372,7 @@ if (isset($_GET['logout'])) {
             fetch(`api/spamwords.php?index=${i}`)
                 .then(res => res.json()).then(word => showEditSpamForm(i, word));
         }
+
         function showAddSpamForm() {
             contentTitle.textContent = 'Agregar Palabra'; contentBody.innerHTML = '';
             const form = document.createElement('form');
@@ -343,10 +381,15 @@ if (isset($_GET['logout'])) {
                 e.preventDefault();
                 const w = form.newSpam.value.trim();
                 fetch('api/spamwords.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({word: w}) })
-                    .then(res => res.json()).then(r => { alert(r.message); loadSpamwords(); });
+                    .then(res => res.json()).then(r => {
+                        alert(r.message);
+                        loadSpamwords();
+                        updateSpamWordCount(1); // Increment spam word count
+                    });
             });
             contentBody.appendChild(form);
         }
+
         function showEditSpamForm(i, w) {
             const form = document.createElement('form');
             form.innerHTML = `<input type="text" name="updatedSpam" value="${w}" required> <button type="submit">Guardar</button> <button type="button" id="del">Eliminar</button>`;
@@ -354,16 +397,37 @@ if (isset($_GET['logout'])) {
                 e.preventDefault();
                 const nw = form.updatedSpam.value.trim();
                 fetch(`api/spamwords.php?index=${i}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({word: nw}) })
-                    .then(res => res.json()).then(r => { alert(r.message); loadSpamwords(); });
+                    .then(res => res.json()).then(r => {
+                        alert(r.message);
+                        loadSpamwords();
+                    });
             });
             form.querySelector('#del').addEventListener('click', () => {
                 if (confirm('¿Eliminar esta palabra?')) {
                     fetch(`api/spamwords.php?index=${i}`, { method:'DELETE' })
-                        .then(res => res.json()).then(r => { alert(r.message); loadSpamwords(); });
+                        .then(res => res.json()).then(r => {
+                            alert(r.message);
+                            loadSpamwords();
+                            updateSpamWordCount(-1); // Decrement spam word count
+                        });
                 }
             });
             contentBody.innerHTML = '';
             contentBody.appendChild(form);
+        }
+
+        function updateEmailCount(folder, change) {
+            const countElement = document.querySelector(`#nav a[data-folder="${folder}"] span`);
+            if (countElement) {
+                countElement.textContent = parseInt(countElement.textContent) + change;
+            }
+        }
+
+        function updateSpamWordCount(change) {
+            const countElement = document.getElementById('spamWordsCount');
+            if (countElement) {
+                countElement.textContent = parseInt(countElement.textContent) + change;
+            }
         }
     });
     </script>
